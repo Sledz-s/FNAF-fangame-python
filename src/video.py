@@ -57,11 +57,15 @@ class Background:
         self.rect = self.image.get_rect()
 
     def bg_draw(self, screen, camera):
+        '''
+        Rysuje tło na ekranie, uwzględniając pozycję kamery. 
+        Jeśli szerokość tła jest większa niż szerokość ekranu, tło przesuwa się zgodnie z ruchem kamery. 
+        W przeciwnym razie tło jest rysowane w stałej pozycji (0, 0).
+        '''
         if self.rect.width > screen.get_width():
             screen.blit(self.image, (-camera.rect.x, -camera.rect.y))
         else:
             screen.blit(self.image, (0, 0))
-
 
 class FadeTransition:
     def __init__(self, width, height, speed=5):

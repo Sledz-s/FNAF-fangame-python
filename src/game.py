@@ -66,13 +66,13 @@ class Game:
         #title_img = random.choice(("title_PLACEHOLDER.png", "title_2_PLACEHOLDER.png"))
 
         self.backgrounds = {
-            StateMachine.STATE_START_TEXT: Background("FryderykFramework.png"),
-            StateMachine.STATE_TITLE: Background("title_PLACEHOLDER.png", (self.width, self.height)),
-            StateMachine.STATE_GAME: Background("office_PLACEHOLDER.png")
+            StateMachine.STATE_START_TEXT: Background(self.assets,"screens/FryderykFramework.png"),
+            StateMachine.STATE_TITLE: Background(self.assets,"screens/title_PLACEHOLDER.png", (self.width, self.height)),
+            StateMachine.STATE_GAME: Background(self.assets,"screens/office_PLACEHOLDER.png")
             }
         
-        self.cam_bg = {'CAM_1': Background("cam01_PLACEHOLDER.png", folder=CAMERAS_DIR),
-                       'CAM_2': Background("cam02_PLACEHOLDER.png", folder=CAMERAS_DIR)
+        self.cam_bg = {'CAM_1': Background(self.assets, "cam/cam01_PLACEHOLDER.png"),
+                       'CAM_2': Background(self.assets, "cam/cam02_PLACEHOLDER.png")
                        }
         self._current_cam = "CAM_1"
 

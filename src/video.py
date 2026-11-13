@@ -1,6 +1,7 @@
 import pygame
 import os
 from dir import SCREENS_DIR
+from assets import AssetManager
 
 # ----------------------------------------
 
@@ -49,9 +50,9 @@ class Video:
 
 
 class Background:
-    def __init__(self, image_path, size=None, folder=SCREENS_DIR):
-        full_path = os.path.join(folder, image_path)
-        self.image = pygame.image.load(full_path).convert()
+    def __init__(self, assets: AssetManager, image_path, size=None):
+
+        self.image = assets.load_image(image_path)
 
         if size:
             self.image = pygame.transform.scale(self.image, size)

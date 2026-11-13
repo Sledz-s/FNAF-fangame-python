@@ -25,6 +25,7 @@ class Video:
        return self.screen
 
     def toggle_fullscreen(self):
+        self.fullscreen = not self.fullscreen
         return pygame.display.toggle_fullscreen()
 
     def get_video_modes(self):

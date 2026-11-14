@@ -2,8 +2,15 @@
 
 nazwa_pliku="fnaf-python"
 
-rm -rf build/ __pycache__/ main.spec
-rm -rf dist/
+rm -rf build/ dist/ __pycache__/ main.spec
+
+# budowa biblioteki c
+cd random_c
+
+python3 setup.py build_ext --inplace
+cp random_native*.so ../src/
+rm random_native*.so
+cd ..
 
 pyinstaller --name=$nazwa_pliku \
             --onefile \

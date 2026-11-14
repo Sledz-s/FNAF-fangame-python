@@ -2,19 +2,16 @@ import pygame
 import random
 import sys
 import time
-from array import array
-from video import *
+from video import Video, DEAFULT_SCREEN_W, DEAFULT_SCREEN_H
 from audio import Audio
 from assets import AssetManager
 
 from game import Game
 
-from dir import CAMERAS_DIR
-
 
 # |-----------------------------|
 # |      FryderykFramework      |
-# |         prototyp 0.4        |
+# |         prototyp 0.5        |
 # |                             |
 # |          Made by            |
 # |           sl3DZ             |
@@ -23,6 +20,7 @@ from dir import CAMERAS_DIR
 
 # ----------------------------------------
 
+AP_TITLE: str = "Fryferyk Framework 0.5"
 
 if __name__ == '__main__':
 
@@ -30,7 +28,7 @@ if __name__ == '__main__':
 
     pygame.init()
 
-    video_handle = Video(title="Fryderyk Engine V0.4" , screen=pygame.display.set_mode((DEAFULT_SCREEN_W, DEAFULT_SCREEN_H)))
+    video_handle = Video(title=AP_TITLE , screen=pygame.display.set_mode((DEAFULT_SCREEN_W, DEAFULT_SCREEN_H)))
     audio_handle = Audio()
     clock = pygame.time.Clock()
     assets_handle = AssetManager()
@@ -51,4 +49,5 @@ if __name__ == '__main__':
 
     pygame.quit()
     sys.exit()
+    
     # ----------------------------------------

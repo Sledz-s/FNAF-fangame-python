@@ -1,21 +1,20 @@
 import pygame
-import random
-import sys
-import time
 
 from assets import AssetManager
-
 from camera import Camera
 from animatronics import Freddy
 from enum import Enum
 from button import Button
 from video import *
 from dir import CAMERAS_DIR
+from my_random import Random
 
 # ----------------------------------------
 # --- KONSTANTY ---
+
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
+
 STATE_TITLE = "TITLE"
 STATE_GAME = "GAME"
 
@@ -27,8 +26,9 @@ class StateMachine(Enum):
     STATE_START_TEXT = 1
     STATE_TITLE = 2
     STATE_GAME = 3
-    STATE_NIGHT_END = 4     # tylko gdy noc się skończy 
-    STATE_GAME_OVER = 5     # gdy gracz przegrał
+    STATE_NIGHT_END = 4
+    STATE_GAME_OVER = 5
+
 
 class SubStateMachine(Enum):
     SUBSTATE_OFFICE = 1
@@ -38,6 +38,7 @@ class SubStateMachine(Enum):
 class Game:
     def __init__(self, video: Video, assets: AssetManager, audio) -> None:
         # ----------------------------------------
+        # Podstawowe ustawienia
 
         self.video = video
         self.screen = self.video.screen
@@ -47,13 +48,21 @@ class Game:
         self.current_cam_id = None
 
         self.assets = assets
+
         # ----------------------------------------
+        # Generator liczb losowych (C)
+
+        self.rng = Random()
+
+        # ----------------------------------------
+        # Maszyna stanów
 
         self._state = StateMachine.STATE_START_TEXT
         self._substate = None
         self._target_state = None
 
         # ----------------------------------------
+        # Inicjalizacja
 
         self._init_assets()
         self._init_ui()
@@ -61,47 +70,75 @@ class Game:
 
     def _init_assets(self):
         """Ładowanie grafik i czcionek"""
-        self.font = pygame.font.Font(None, 36)  #preload -> optymalizacja
 
-        #title_img = random.choice(("title_PLACEHOLDER.png", "title_2_PLACEHOLDER.png"))
+        self.font = pygame.font.Font(None, 36)
 
         self.backgrounds = {
-            StateMachine.STATE_START_TEXT: Background(self.assets,"screens/FryderykFramework.png"),
-            StateMachine.STATE_TITLE: Background(self.assets,"screens/title_PLACEHOLDER.png", (self.width, self.height)),
-            StateMachine.STATE_GAME: Background(self.assets,"screens/office_PLACEHOLDER.png")
-            }
-        
-        self.cam_bg = {'CAM_1': Background(self.assets, "cam/cam01_PLACEHOLDER.png"),
-                       'CAM_2': Background(self.assets, "cam/cam02_PLACEHOLDER.png")
-                       }
-        self._current_cam = "CAM_1"
+            StateMachine.STATE_START_TEXT: Background(
+                self.assets, "screens/FryderykFramework.png"
+            ),
+            StateMachine.STATE_TITLE: Background(
+                self.assets, "screens/title_PLACEHOLDER.png",
+                (self.width, self.height)
+            ),
+            StateMachine.STATE_GAME: Background(
+                self.assets, "screens/office_PLACEHOLDER.png"
+            )
+        }
 
+        self.cam_bg = {
+            'CAM_1': Background(self.assets, "cam/cam01_PLACEHOLDER.png"),
+            'CAM_2': Background(self.assets, "cam/cam02_PLACEHOLDER.png")
+        }
+
+        self._current_cam = "CAM_1"
 
     def _init_ui(self):
         """Tworzenie przycisków"""
+
         self.start_bttn = Button(
             assets=self.assets,
-            x=self.width-160, y=160,
+            x=self.width - 160,
+            y=160,
             idle="start_idle_PLACEHOLDER_.png",
             hover="start_hover_PLACEHOLDER_.png",
-            pressed="start_pressed_PLACEHOLDER_.png")
+            pressed="start_pressed_PLACEHOLDER_.png"
+        )
 
         self.camera_onoff_bttn = Button(
             assets=self.assets,
-            x=self.width // 2, y=self.height - 40,
+            x=self.width // 2,
+            y=self.height - 40,
             idle="start_idle_PLACEHOLDER_.png",
-            pressed="start_pressed_PLACEHOLDER_.png")
+            pressed="start_pressed_PLACEHOLDER_.png"
+        )
 
-        self.cam_bttn =[   # przyciski do wyboru kamery
-            Button(assets=self.assets, x=self.width-160, y=160, idle = "start_idle_PLACEHOLDER_.png", id="CAM_1"),
-            Button(assets=self.assets, x=self.width-160, y=120, idle = "start_idle_PLACEHOLDER_.png", id="CAM_2")]
-            
+        self.cam_bttn = [
+            Button(
+                assets=self.assets,
+                x=self.width - 160,
+                y=160,
+                idle="start_idle_PLACEHOLDER_.png",
+                id="CAM_1"
+            ),
+            Button(
+                assets=self.assets,
+                x=self.width - 160,
+                y=120,
+                idle="start_idle_PLACEHOLDER_.png",
+                id="CAM_2"
+            )
+        ]
 
     def _init_entities(self):
         """Powoływanie do życia logiki gry"""
+
         self.camera = Camera(self.width, self.height)
         self.fade = FadeTransition(self.width, self.height, speed=10)
-        self.freddy = Freddy(pizzeria, 1.0, 20)
+
+        # Przekazujemy generator do AI Freddy'ego
+        self.freddy = Freddy(pizzeria, 1.0, 20, self.rng)
+
         self.current_night = None
 
     def change_state(self, new_state):
@@ -111,6 +148,7 @@ class Game:
 
     def init_state_change(self):
         """Logika wykonywana przy faktycznej zmianie stanu"""
+
         self._state = self._target_state
 
         match self._state:
@@ -119,7 +157,7 @@ class Game:
 
             case StateMachine.STATE_TITLE:
                 self._substate = None
-                
+
             case StateMachine.STATE_GAME:
                 self.current_night = Night(1)
                 self.freddy.move(0, 0)
@@ -140,10 +178,11 @@ class Game:
                 case StateMachine.STATE_START_TEXT:
                     if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                         self.running = False
-                    
+
                 case StateMachine.STATE_TITLE:
                     if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                         self.running = False
+
                     if self.start_bttn.handler(event):
                         self.change_state(StateMachine.STATE_GAME)
 
@@ -160,11 +199,10 @@ class Game:
                             for bttn in self.cam_bttn:
                                 if bttn.handler(event):
                                     self._current_cam = bttn.id
-                                    self.fade.start("IN")   # zamienić na szum miedzy kamerami ale teraz tez dziala
+                                    self.fade.start("IN")
 
                             if self.camera_onoff_bttn.handler(event):
                                 self._substate = SubStateMachine.SUBSTATE_OFFICE
-
 
     def update(self, deltatime):
         if self.fade.update():
@@ -175,11 +213,9 @@ class Game:
 
         match self._state:
             case StateMachine.STATE_START_TEXT:
-                
                 self.wait_time += deltatime
 
                 if self.wait_time >= 1.0:
-
                     self.wait_time = 0.0
                     self.change_state(StateMachine.STATE_TITLE)
 
@@ -192,16 +228,13 @@ class Game:
                 self.camera_onoff_bttn.update()
 
                 if self._substate == SubStateMachine.SUBSTATE_OFFICE:
-
                     self._update_camera_view(deltatime)
 
                 if self._substate == SubStateMachine.SUBSTATE_CAM:
-
                     for bttn in self.cam_bttn:
                         bttn.update()
 
             case StateMachine.STATE_NIGHT_END:
-
                 self.wait_time += deltatime
 
                 if self.wait_time >= 1.0:
@@ -212,31 +245,50 @@ class Game:
         match self._state:
             case StateMachine.STATE_TITLE:
                 self.backgrounds[self._state].bg_draw(self.screen, self.camera)
-                self.print_on_screen("Fryderyk Framework prototype 0.4", (self.width // 2, 30))
+                self.print_on_screen(
+                    "Fryderyk Framework prototype 0.4",
+                    (self.width // 2, 30)
+                )
                 self.start_bttn.draw(self.screen)
 
             case StateMachine.STATE_START_TEXT:
                 self.backgrounds[self._state].bg_draw(self.screen, self.camera)
-                self.print_on_screen("Fryderyk Framework", (self.width // 2, 30))
+                self.print_on_screen(
+                    "Fryderyk Framework",
+                    (self.width // 2, 30)
+                )
 
             case StateMachine.STATE_GAME:
-                # Wyświetlanie godziny
-                godzina_tekst = f"Godzina: {self.current_night.godzina if self.current_night.godzina != 0 else 12} AM"
-                
+                godzina_tekst = (
+                    f"Godzina: {self.current_night.godzina if self.current_night.godzina != 0 else 12} AM"
+                )
+
                 if self._substate == SubStateMachine.SUBSTATE_OFFICE:
-                    self.backgrounds[self._state].bg_draw(self.screen, self.camera)
-                
+                    self.backgrounds[self._state].bg_draw(
+                        self.screen, self.camera
+                    )
+
                 if self._substate == SubStateMachine.SUBSTATE_CAM:
-                    self.cam_bg[self._current_cam].bg_draw(self.screen, self.camera)
-                    self.print_on_screen("SYSTEM KAMER - PODGLĄD", (self.width // 2, self.height // 2))
+                    self.cam_bg[self._current_cam].bg_draw(
+                        self.screen, self.camera
+                    )
+
+                    self.print_on_screen(
+                        "SYSTEM KAMER - PODGLĄD",
+                        (self.width // 2, self.height // 2)
+                    )
+
                     for bttn in self.cam_bttn:
                         bttn.draw(self.screen)
 
-                self.camera_onoff_bttn.draw(self.screen) # zawsze na końcu by przycisk był na 1 warstwie
+                self.camera_onoff_bttn.draw(self.screen)
                 self.print_on_screen(godzina_tekst, (100, 30))
 
         # Debug
-        self.print_on_screen(f"State: {self._state.name}", (self.width - 150, 30))
+        self.print_on_screen(
+            f"State: {self._state.name}",
+            (self.width - 150, 30)
+        )
 
         self.fade.fade_transition(self.screen)
         pygame.display.flip()
@@ -248,27 +300,30 @@ class Game:
 
     def _update_camera_view(self, deltatime: float) -> None:
         """Logika przesuwania widoku biura za pomocą myszki"""
+
         mouse_x, _ = pygame.mouse.get_pos()
         border = 150
         speed = 800 * deltatime
 
-        # Przesunięcie w lewo
         if mouse_x < border:
             strength = (border - mouse_x) / border
             self.camera.cam_move(-speed * strength, 0)
-        # Przesunięcie w prawo
+
         elif mouse_x > self.width - border:
             strength = (mouse_x - (self.width - border)) / border
             self.camera.cam_move(speed * strength, 0)
 
-        # Ograniczenie (clipping) widoku do rozmiarów tła
-        # Używamy self._state (Enum), aby pobrać aktualne tło biura
         bg_rect = self.backgrounds[self._state].rect
         max_x = max(0, bg_rect.width - self.width)
-        self.camera.rect.x = max(0, min(self.camera.rect.x, max_x))
 
-class Night:  # noc, kurde
-    """Zarządza logiką godzin, aktualizowania AI przeciwników"""
+        self.camera.rect.x = max(
+            0,
+            min(self.camera.rect.x, max_x)
+        )
+
+
+class Night:
+    """Zarządza logiką godzin i aktualizowaniem AI przeciwników."""
 
     def __init__(self, curr_night):
         self.curr_night = curr_night
@@ -278,13 +333,13 @@ class Night:  # noc, kurde
 
     def night_update(self, deltatime: float):
         self.accumulator += deltatime
+
         if self.accumulator >= self.dl_godzina:
             self.godzina += 1
             self.accumulator = 0
-            # do to, dodać reszte logiki
             self.hour_event()
 
     def hour_event(self):
         if self.godzina == 6:
-            self.change_state(StateMachine.STATE_TITLE)
+            # TODO: obsługa zakończenia nocy
             return

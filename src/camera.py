@@ -1,6 +1,13 @@
 import pygame
-
+from enum import Enum, auto
 # ----------------------------------------
+
+class CameraID(Enum):
+    CAM_1A = auto()
+    CAM_1B = auto()
+    CAM_1C = auto()
+    CAM_2A = auto()
+    CAM_2B = auto()
 
 class Camera:
     def __init__(self, width, height):

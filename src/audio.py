@@ -1,35 +1,45 @@
+
 import pygame
+from assets import AssetManager
+
 
 class Audio:
-    def __init__(self):
-        pygame.mixer.init()
-        self.sounds = {}
+    def __init__(self, assets: AssetManager):
+        self.assets = assets
 
-    def load_sound(self, name, file_path):
-        """Load a sound file and store it in the sounds dictionary."""
-        try:
-            sound = pygame.mixer.Sound(file_path)
-            self.sounds[name] = sound
-        except pygame.error as e:
-            print(f"Error loading sound {file_path}: {e}")
+    def play_sound(self, filename):
+        sound = self.assets.load_sound(filename)
+        sound.play()
 
-    def play_sound(self, name):
-        """Play a loaded sound by its name."""
-        if name in self.sounds:
-            self.sounds[name].play()
-        else:
-            print(f"Sound '{name}' not found.")
+    def stop_sound(self, filename):
+        sound = self.assets.load_sound(filename)
+        sound.stop()
 
-    def stop_sound(self, name):
-        """Stop a playing sound by its name."""
-        if name in self.sounds:
-            self.sounds[name].stop()
-        else:
-            print(f"Sound '{name}' not found.")
- 
-    def set_volume(self, name, volume):
-        """Set the volume for a specific sound."""
-        if name in self.sounds:
-            self.sounds[name].set_volume(volume)
-        else:
-            print(f"Sound '{name}' not found.")
+    def set_volume(self, filename, volume):
+        sound = self.assets.load_sound(filename)
+        sound.set_volume(volume)
+
+    def set_master_volume(self, volume):
+        for sound in self.assets.sounds.values():
+            sound.set_volume(volume)
+
+class Music:
+    def __init__(self, assets: AssetManager):
+        self.assets = assets
+
+    def play_music(self, filename, loops=-1):
+        path = self.assets.get_path(filename)
+        pygame.mixer.music.load(path)
+        pygame.mixer.music.play(loops)
+
+    def stop_music(self):
+        pygame.mixer.music.stop()
+
+    def pause_music(self):
+        pygame.mixer.music.pause()
+
+    def resume_music(self):
+        pygame.mixer.music.unpause()
+
+    def set_volume(self, volume):
+        pygame.mixer.music.set_volume(volume)

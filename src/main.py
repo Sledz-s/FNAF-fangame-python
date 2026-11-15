@@ -27,11 +27,14 @@ if __name__ == '__main__':
     random.seed(time.time())
 
     pygame.init()
+    pygame.mixer.init()
+
+    assets_handle = AssetManager()
 
     video_handle = Video(title=AP_TITLE , screen=pygame.display.set_mode((DEAFULT_SCREEN_W, DEAFULT_SCREEN_H)))
-    audio_handle = Audio()
+    audio_handle = Audio(assets_handle)
     clock = pygame.time.Clock()
-    assets_handle = AssetManager()
+    
 
     game = Game(
         video=video_handle,

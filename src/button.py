@@ -5,7 +5,7 @@ from assets import AssetManager
 
 # ----------------------------------------
 
-class Button:   # Do optymalizacji, sprawdzaj czy grafiki zostały już załadowane, żeby nie ładować kilka razy 1 obrazka do RAM-u
+class Button:
     def __init__(self, assets: AssetManager, x, y, idle, hover=None, pressed=None, id = None):
         self.id = id
         self.image_idle = assets.load_image(idle)

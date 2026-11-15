@@ -3,7 +3,7 @@ import pygame
 from assets import AssetManager
 from camera import Camera
 from animatronics import Freddy
-from enum import Enum
+from enum import Enum, IntEnum
 from button import Button
 from video import *
 from dir import CAMERAS_DIR
@@ -34,6 +34,13 @@ class SubStateMachine(Enum):
     SUBSTATE_OFFICE = 1
     SUBSTATE_CAM = 2
 
+class AnimatronicID(IntEnum):
+    FREDDY = 0
+    BONNIE = 1
+    CHICA = 2
+    FOXY = 3
+    PUPPET = 4
+    GOLDEN_FREDDY = 5
 
 class Game:
     def __init__(self, video: Video, assets: AssetManager, audio) -> None:
@@ -48,6 +55,8 @@ class Game:
         self.current_cam_id = None
 
         self.assets = assets
+
+        self.video.toggle_fullscreen()
 
         # ----------------------------------------
         # Generator liczb losowych (C)
@@ -67,6 +76,8 @@ class Game:
         self._init_assets()
         self._init_ui()
         self._init_entities()
+
+        self.wait_time = 0.0
 
     def _init_assets(self):
         """Ładowanie grafik i czcionek"""
@@ -139,7 +150,13 @@ class Game:
         # Przekazujemy generator do AI Freddy'ego
         self.freddy = Freddy(pizzeria, 1.0, 20, self.rng)
 
+        self.animatronics = [
+        self.freddy
+        ]
+
         self.current_night = None
+
+
 
     def change_state(self, new_state):
         if not self.fade.active:
@@ -159,7 +176,12 @@ class Game:
                 self._substate = None
 
             case StateMachine.STATE_GAME:
-                self.current_night = Night(1)
+                self.current_night = Night(
+                    curr_night=1,
+                    game=self,
+                    animatronics=self.animatronics
+                )
+
                 self.freddy.move(0, 0)
                 self._substate = SubStateMachine.SUBSTATE_OFFICE
 
@@ -207,9 +229,6 @@ class Game:
     def update(self, deltatime):
         if self.fade.update():
             self.init_state_change()
-
-        if not hasattr(self, 'wait_time'):
-            self.wait_time = 0.0
 
         match self._state:
             case StateMachine.STATE_START_TEXT:
@@ -325,21 +344,93 @@ class Game:
 class Night:
     """Zarządza logiką godzin i aktualizowaniem AI przeciwników."""
 
-    def __init__(self, curr_night):
+    def __init__(self, curr_night: int, game: Game, animatronics: list) -> None:
+        self.game = game
+
+        self.animatronics = animatronics
+
         self.curr_night = curr_night
         self.accumulator: float = 0
         self.godzina: int = 0
+        
         self.dl_godzina = 90
+
+        self.night_events = [
+            self.night_1_event,
+            self.night_2_event,
+            self.night_3_event,
+        ]
 
     def night_update(self, deltatime: float):
         self.accumulator += deltatime
 
-        if self.accumulator >= self.dl_godzina:
+        while self.accumulator >= self.dl_godzina:
+            self.accumulator -= self.dl_godzina
             self.godzina += 1
-            self.accumulator = 0
             self.hour_event()
 
+    def boost_ai(self, animatronic_id: AnimatronicID, amount: int):
+        self.animatronics[animatronic_id.value].zwieksz_ai(amount)
+
+    def night_1_event(self):
+        match self.godzina:
+            case 1:
+                pass
+
+            case 2:
+                pass
+
+            case 3:
+                self.boost_ai(AnimatronicID.FREDDY, 1)
+
+            case 4:
+                self.boost_ai(AnimatronicID.FREDDY, 2)
+
+            case 5:
+                self.boost_ai(AnimatronicID.FREDDY, 3)
+
+            case 6:
+                self.game.change_state(StateMachine.STATE_NIGHT_END)
+
+    def night_2_event(self):
+            match self.godzina:
+                case 1:
+                    pass
+    
+                case 2:
+                    pass
+    
+                case 3:
+                    self.boost_ai(AnimatronicID.FREDDY, 1)
+    
+                case 4:
+                    self.boost_ai(AnimatronicID.FREDDY, 2)
+    
+                case 5:
+                    self.boost_ai(AnimatronicID.FREDDY, 3)
+    
+                case 6:
+                    self.game.change_state(StateMachine.STATE_NIGHT_END)
+
+    def night_3_event(self):
+            match self.godzina:
+                case 1:
+                    pass
+    
+                case 2:
+                    pass
+    
+                case 3:
+                    self.boost_ai(AnimatronicID.FREDDY, 1)
+    
+                case 4:
+                    self.boost_ai(AnimatronicID.FREDDY, 2)
+    
+                case 5:
+                    self.boost_ai(AnimatronicID.FREDDY, 3)
+    
+                case 6:
+                    self.game.change_state(StateMachine.STATE_NIGHT_END)
+    
     def hour_event(self):
-        if self.godzina == 6:
-            # TODO: obsługa zakończenia nocy
-            return
+        self.night_events[self.curr_night - 1]()

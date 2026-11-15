@@ -48,7 +48,6 @@ class Video:
         if self.title:
             pygame.display.set_caption(self.title)
 
-
 class Background:
     def __init__(self, assets: AssetManager, image_path, size=None):
 

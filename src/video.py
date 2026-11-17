@@ -1,5 +1,4 @@
 import pygame
-import os
 from dir import SCREENS_DIR
 from assets import AssetManager
 
@@ -49,6 +48,7 @@ class Video:
             pygame.display.set_caption(self.title)
 
 class Background:
+    __slots__ = ('image', 'rect')
     def __init__(self, assets: AssetManager, image_path, size=None):
 
         self.image = assets.load_image(image_path)
@@ -57,7 +57,7 @@ class Background:
             self.image = pygame.transform.scale(self.image, size)
         self.rect = self.image.get_rect()
 
-    def bg_draw(self, screen, camera):
+    def draw(self, screen, camera):
         '''
         Rysuje tło na ekranie, uwzględniając pozycję kamery. 
         Jeśli szerokość tła jest większa niż szerokość ekranu, tło przesuwa się zgodnie z ruchem kamery. 
@@ -82,24 +82,81 @@ class FadeTransition:
         self.active = True
         self.alpha = 0 if mode == "OUT" else 255
 
-    def update(self):
+    def update(self, deltatime):
         if not self.active:
             return False
 
+        change = self.speed * deltatime
+
         if self.mode == "OUT":
-            self.alpha += self.speed
+            self.alpha += change
+
             if self.alpha >= 255:
                 self.alpha = 255
                 self.active = False
                 return True
+
         else:
-            self.alpha -= self.speed
+            self.alpha -= change
+
             if self.alpha <= 0:
                 self.alpha = 0
                 self.active = False
+
         return False
 
     def fade_transition(self, screen):
         if self.alpha > 0:
             self.surface.set_alpha(self.alpha)
             screen.blit(self.surface, (0, 0))
+
+class ScreenEffect:
+    def __init__(self):
+        self.active = True
+
+    def update(self, deltatime: float):
+        pass
+
+    def draw(self, screen: pygame.Surface):
+        pass
+
+class FlashEffect(ScreenEffect):
+    def __init__(self, color=(255, 255, 255), duration=0.2):
+        super().__init__()
+
+        self.color = color
+        self.duration = duration
+        self.timer = 0.0
+
+    def update(self, deltatime):
+        self.timer += deltatime
+
+        if self.timer >= self.duration:
+            self.active = False
+
+    def draw(self, screen):
+        if self.active:
+            overlay = pygame.Surface(screen.get_size())
+            overlay.fill(self.color)
+
+            alpha = 255 * (1.0 - self.timer / self.duration)
+            overlay.set_alpha(int(alpha))
+
+            screen.blit(overlay, (0, 0))
+
+class ScreenEffects:
+    def __init__(self):
+        self.effects = []
+
+    def add_effect(self, effect: ScreenEffect):
+        self.effects.append(effect)
+
+    def update(self, deltatime):
+        for effect in self.effects:
+            effect.update(deltatime)
+
+        self.effects = [effect for effect in self.effects if effect.active]
+
+    def draw(self, screen):
+        for effect in self.effects:
+            effect.draw(screen)

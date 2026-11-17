@@ -4,6 +4,7 @@ from assets import AssetManager
 
 from enum import Enum, auto
 
+
 class ButtonState(Enum):
     IDLE = auto()
     HOVER = auto()
@@ -12,6 +13,7 @@ class ButtonState(Enum):
 # ----------------------------------------
 
 class Button:
+    __slots__ = ('id', 'image_idle', 'image_hover', 'image_pressed', 'image', 'rect', 'is_pressed')
     def __init__(self, assets: AssetManager, x, y, idle, hover=None, pressed=None, id = None):
         self.id = id
         self.image_idle = assets.load_image(idle)
@@ -58,6 +60,7 @@ class Button:
         return False
 
 class CamButton(Button):
+    __slots__ = ('image_active', 'is_active')
     def __init__(self, assets, x, y, idle, active, id=None):
         super().__init__(assets, x, y, idle, id=id)
 

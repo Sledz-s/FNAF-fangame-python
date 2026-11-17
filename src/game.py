@@ -15,7 +15,6 @@ from my_random import Random
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 
-
 class StateMachine(Enum):
     STATE_START_TEXT = 1
     STATE_TITLE = 2
@@ -53,7 +52,7 @@ class Game:
 
         self.assets = assets
         self.audio = audio
-
+        
         # self.video.toggle_fullscreen()
 
         # ----------------------------------------
@@ -88,6 +87,8 @@ class Game:
     def _init_assets(self):
 
         self.font = pygame.font.Font(None, 36)
+
+        self.text_cache = {}
 
         self.backgrounds = {
             StateMachine.STATE_START_TEXT: Background(
@@ -170,21 +171,7 @@ class Game:
 
         self.camera = Camera(self.width, self.height)
 
-        self.fade = FadeTransition(
-            self.width,
-            self.height,
-            speed=10
-        )
-
-        self.freddy = Freddy(
-            tick_interval=1.0,
-            ai=1,
-            rng=self.rng
-        )
-
-        self.animatronics = [
-            self.freddy
-        ]
+        self.fade = FadeTransition(self.width,self.height,speed=400)
 
         self.current_night = None
 
@@ -211,11 +198,7 @@ class Game:
 
             case StateMachine.STATE_GAME:
 
-                self.current_night = Night(
-                    curr_night=1,
-                    game=self,
-                    animatronics=self.animatronics
-                )
+                self.current_night = Night(curr_night=1, game=self)
 
                 self._substate = SubStateMachine.SUBSTATE_OFFICE
 
@@ -287,7 +270,7 @@ class Game:
 
     def update(self, deltatime):
 
-        if self.fade.update():
+        if self.fade.update(deltatime):
             self.init_state_change()
 
         match self._state:
@@ -308,10 +291,7 @@ class Game:
 
             case StateMachine.STATE_GAME:
 
-                self.current_night.night_update(deltatime)
-
-                for animatronic in self.animatronics:
-                    animatronic.update(deltatime)
+                self.current_night.update(deltatime)
 
                 self.camera_onoff_bttn.update()
 
@@ -337,26 +317,18 @@ class Game:
     # --- DRAW ---
 
     def draw(self):
+        background = self.backgrounds[self._state]
 
         match self._state:
 
             case StateMachine.STATE_TITLE:
 
-                self.backgrounds[self._state].bg_draw(
-                    self.screen,
-                    self.camera
-                )
-
-                self.print_on_screen(
-                    "Fryderyk Framework prototype 0.4",
-                    (self.width // 2, 30)
-                )
-
+                background.draw(self.screen,self.camera)
                 self.start_bttn.draw(self.screen)
 
             case StateMachine.STATE_START_TEXT:
 
-                self.backgrounds[self._state].bg_draw(
+                background.draw(
                     self.screen,
                     self.camera
                 )
@@ -368,21 +340,15 @@ class Game:
 
             case StateMachine.STATE_GAME:
 
-                godzina_tekst = (
-                    f"Godzina: "
-                    f"{self.current_night.godzina if self.current_night.godzina != 0 else 12} AM"
-                )
+                godzina_tekst = (f"Godzina: {self.current_night.godzina if self.current_night.godzina != 0 else 12} AM")
 
                 if self._substate == SubStateMachine.SUBSTATE_OFFICE:
 
-                    self.backgrounds[self._state].bg_draw(
-                        self.screen,
-                        self.camera
-                    )
+                    background.draw(self.screen,self.camera)
 
                 elif self._substate == SubStateMachine.SUBSTATE_CAM:
 
-                    self.cam_bg[self.current_cam_id].bg_draw(
+                    self.cam_bg[self.current_cam_id].draw(
                         self.screen,
                         self.camera
                     )
@@ -421,7 +387,7 @@ class Game:
 
     def draw_animatronics_on_camera(self):
 
-        for animatronic in self.animatronics:
+        for animatronic in self.current_night.animatronics:
 
             if animatronic.is_visible_on_camera(self.current_cam_id):
                 self.print_on_screen(f'Widoczny:{type(animatronic).__name__} {animatronic.location}',
@@ -431,8 +397,12 @@ class Game:
     # --- HELPERS ---
 
     def print_on_screen(self, text, pos, color=WHITE):
+        key = (text, color)
 
-        surf = self.font.render(text, True, color)
+        if key not in self.text_cache:
+            self.text_cache[key] = self.font.render(text, True, color)
+
+        surf = self.text_cache[key]
         rect = surf.get_rect(center=pos)
 
         self.screen.blit(surf, rect)
@@ -467,10 +437,8 @@ class Game:
 class Night:
     """Zarządza logiką godzin i aktualizowaniem AI przeciwników."""
 
-    def __init__(self, curr_night: int, game: Game, animatronics: list) -> None:
-        self.game = game
-
-        self.animatronics = animatronics
+    def __init__(self, curr_night: int, game: Game) -> None:
+        self.game: Game = game
 
         self.curr_night = curr_night
         self.accumulator: float = 0
@@ -484,7 +452,17 @@ class Night:
             self.night_3_event,
         ]
 
-    def night_update(self, deltatime: float):
+        self._create_animatronics()
+        
+    def _create_animatronics(self):
+
+        self.freddy: Freddy = Freddy(tick_interval=1.0,ai=1,rng=self.game.rng)
+                
+        self.animatronics: list = [
+            self.freddy
+        ]
+
+    def update(self, deltatime: float):
         self.accumulator += deltatime
 
         while self.accumulator >= self.dl_godzina and self.godzina < 6:
@@ -492,8 +470,11 @@ class Night:
             self.godzina += 1
             self.hour_event()
 
-    def boost_ai(self, animatronic_id: AnimatronicID, amount: int):
-        self.animatronics[animatronic_id.value].zwieksz_ai(amount)
+        for animatronic in self.animatronics:
+            animatronic.update(deltatime)
+
+    def _boost_ai(self, animatronic_id: AnimatronicID, amount: int):
+        self.animatronics[animatronic_id.value].increase_ai(amount)
 
     def night_1_event(self):
         match self.godzina:
@@ -504,13 +485,13 @@ class Night:
                 pass
 
             case 3:
-                self.boost_ai(AnimatronicID.FREDDY, 1)
+                self._boost_ai(AnimatronicID.FREDDY, 1)
 
             case 4:
-                self.boost_ai(AnimatronicID.FREDDY, 2)
+                self._boost_ai(AnimatronicID.FREDDY, 2)
 
             case 5:
-                self.boost_ai(AnimatronicID.FREDDY, 3)
+                self._boost_ai(AnimatronicID.FREDDY, 3)
 
             case 6:
                 self.game.change_state(StateMachine.STATE_NIGHT_END)
@@ -524,13 +505,13 @@ class Night:
                     pass
     
                 case 3:
-                    self.boost_ai(AnimatronicID.FREDDY, 1)
+                    self._boost_ai(AnimatronicID.FREDDY, 1)
     
                 case 4:
-                    self.boost_ai(AnimatronicID.FREDDY, 2)
+                    self._boost_ai(AnimatronicID.FREDDY, 2)
     
                 case 5:
-                    self.boost_ai(AnimatronicID.FREDDY, 3)
+                    self._boost_ai(AnimatronicID.FREDDY, 3)
     
                 case 6:
                     self.game.change_state(StateMachine.STATE_NIGHT_END)
@@ -544,13 +525,13 @@ class Night:
                     pass
     
                 case 3:
-                    self.boost_ai(AnimatronicID.FREDDY, 1)
+                    self._boost_ai(AnimatronicID.FREDDY, 1)
     
                 case 4:
-                    self.boost_ai(AnimatronicID.FREDDY, 2)
+                    self._boost_ai(AnimatronicID.FREDDY, 2)
     
                 case 5:
-                    self.boost_ai(AnimatronicID.FREDDY, 3)
+                    self._boost_ai(AnimatronicID.FREDDY, 3)
     
                 case 6:
                     self.game.change_state(StateMachine.STATE_NIGHT_END)

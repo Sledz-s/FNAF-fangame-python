@@ -70,8 +70,7 @@ class Animatronic:
     def play_sound(self):
         pass
 
-    def zwieksz_ai(self, wielkosc: int):
-        """Zwiększa agresywność animatronika."""
+    def increase_ai(self, wielkosc: int):
 
         self.ai += wielkosc
 

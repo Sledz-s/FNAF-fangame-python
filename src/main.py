@@ -27,7 +27,10 @@ if __name__ == '__main__':
     random.seed(time.time())
 
     pygame.init()
+
     pygame.mixer.init()
+    if not pygame.mixer.get_init():
+        print("pygame.mixer couldn't initialize")
 
     assets_handle = AssetManager()
 
@@ -40,7 +43,7 @@ if __name__ == '__main__':
         video=video_handle,
         assets=assets_handle,
         audio=audio_handle
-        )
+    )
 
     while game.running:
         deltatime = clock.tick(60) / 1000.0
@@ -50,6 +53,7 @@ if __name__ == '__main__':
 
     # ----------------------------------------
 
+    pygame.mixer.quit()
     pygame.quit()
     sys.exit()
     

@@ -5,7 +5,7 @@ from dir import RSC_DIR
 class AssetManager:
     def __init__(self):
         self.images = {}
-        self.sounds = {}
+        self.sounds = {}    
 
     def load_image(self, filename):
         path = os.path.join(RSC_DIR, filename)
@@ -22,3 +22,6 @@ class AssetManager:
             self.sounds[path] = pygame.mixer.Sound(path)
 
         return self.sounds[path]
+
+    def get_path(self, filename):
+        return os.path.join(RSC_DIR, filename)

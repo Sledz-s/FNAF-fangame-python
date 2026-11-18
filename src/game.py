@@ -4,10 +4,11 @@ import pygame
 from assets import AssetManager
 from camera import Camera, CameraID
 from animatronics import Freddy
-from enum import Enum, IntEnum
+from enum import Enum, auto
 from button import Button, CamButton
 from video import *
 from my_random import Random
+from audio import Audio
 
 # ----------------------------------------
 # --- KONSTANTY ---
@@ -15,26 +16,26 @@ from my_random import Random
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 
-class StateMachine(Enum):
-    STATE_START_TEXT = 1
-    STATE_TITLE = 2
-    STATE_GAME = 3
-    STATE_NIGHT_END = 4
-    STATE_GAME_OVER = 5
+class GameState(Enum):
+    STATE_START_TEXT = auto()
+    STATE_TITLE = auto()
+    STATE_LOADING = auto()
+    STATE_GAME = auto()
+    STATE_NIGHT_END = auto()
 
 
 class SubStateMachine(Enum):
-    SUBSTATE_OFFICE = 1
-    SUBSTATE_CAM = 2
+    SUBSTATE_OFFICE = auto()
+    SUBSTATE_CAM = auto()
 
 
-class AnimatronicID(IntEnum):
-    FREDDY = 0
-    BONNIE = 1
-    CHICA = 2
-    FOXY = 3
-    PUPPET = 4
-    GOLDEN_FREDDY = 5
+class AnimatronicID(Enum):
+    FREDDY = auto()
+    BONNIE = auto()
+    CHICA = auto()
+    FOXY = auto()
+    PUPPET = auto()
+    GOLDEN_FREDDY = auto()
 
 
 # ----------------------------------------
@@ -42,7 +43,7 @@ class AnimatronicID(IntEnum):
 
 
 class Game:
-    def __init__(self, video: Video, assets: AssetManager, audio) -> None:
+    def __init__(self, video: Video, assets: AssetManager, audio: Audio) -> None:
 
         self.video = video
         self.screen = self.video.screen
@@ -63,7 +64,7 @@ class Game:
         # ----------------------------------------
         # Maszyna stanów
 
-        self._state = StateMachine.STATE_START_TEXT
+        self._state = GameState.STATE_START_TEXT
         self._substate = None
         self._target_state = None
 
@@ -81,6 +82,11 @@ class Game:
 
         self.wait_time = 0.0
 
+        # ----------------------------------------
+        # TEST
+        
+        self.audio.music.play(0)
+
     # ----------------------------------------
     # --- ASSETS ---
 
@@ -91,18 +97,18 @@ class Game:
         self.text_cache = {}
 
         self.backgrounds = {
-            StateMachine.STATE_START_TEXT: Background(
+            GameState.STATE_START_TEXT: Background(
                 self.assets,
                 "screens/FryderykFramework.png"
             ),
 
-            StateMachine.STATE_TITLE: Background(
+            GameState.STATE_TITLE: Background(
                 self.assets,
                 "screens/title_PLACEHOLDER.png",
                 (self.width, self.height)
             ),
 
-            StateMachine.STATE_GAME: Background(
+            GameState.STATE_GAME: Background(
                 self.assets,
                 "screens/office_PLACEHOLDER.png"
             )
@@ -190,19 +196,19 @@ class Game:
 
         match self._state:
 
-            case StateMachine.STATE_START_TEXT:
+            case GameState.STATE_START_TEXT:
                 self._substate = None
 
-            case StateMachine.STATE_TITLE:
+            case GameState.STATE_TITLE:
                 self._substate = None
 
-            case StateMachine.STATE_GAME:
+            case GameState.STATE_GAME:
 
                 self.current_night = Night(curr_night=1, game=self)
 
                 self._substate = SubStateMachine.SUBSTATE_OFFICE
 
-            case StateMachine.STATE_NIGHT_END:
+            case GameState.STATE_NIGHT_END:
                 self._substate = None
 
         self.fade.start("IN")
@@ -220,13 +226,13 @@ class Game:
 
             match self._state:
 
-                case StateMachine.STATE_START_TEXT:
+                case GameState.STATE_START_TEXT:
 
                     if event.type == pygame.KEYDOWN:
                         if event.key == pygame.K_ESCAPE:
                             self.running = False
 
-                case StateMachine.STATE_TITLE:
+                case GameState.STATE_TITLE:
 
                     if event.type == pygame.KEYDOWN:
                         if event.key == pygame.K_ESCAPE:
@@ -234,15 +240,15 @@ class Game:
 
                     if self.start_bttn.handler(event):
                         self.change_state(
-                            StateMachine.STATE_GAME
+                            GameState.STATE_GAME
                         )
 
-                case StateMachine.STATE_GAME:
+                case GameState.STATE_GAME:
 
                     if event.type == pygame.KEYDOWN:
                         if event.key == pygame.K_ESCAPE:
                             self.change_state(
-                                StateMachine.STATE_TITLE
+                                GameState.STATE_TITLE
                             )
 
                     match self._substate:
@@ -275,21 +281,21 @@ class Game:
 
         match self._state:
 
-            case StateMachine.STATE_START_TEXT:
+            case GameState.STATE_START_TEXT:
 
                 self.wait_time += deltatime
 
                 if self.wait_time >= 1.0:
                     self.wait_time = 0.0
                     self.change_state(
-                        StateMachine.STATE_TITLE
+                        GameState.STATE_TITLE
                     )
 
-            case StateMachine.STATE_TITLE:
+            case GameState.STATE_TITLE:
 
                 self.start_bttn.update()
 
-            case StateMachine.STATE_GAME:
+            case GameState.STATE_GAME:
 
                 self.current_night.update(deltatime)
 
@@ -303,14 +309,14 @@ class Game:
                     for bttn in self.cam_bttn:
                         bttn.update()
 
-            case StateMachine.STATE_NIGHT_END:
+            case GameState.STATE_NIGHT_END:
 
                 self.wait_time += deltatime
 
                 if self.wait_time >= 1.0:
                     self.wait_time = 0.0
                     self.change_state(
-                        StateMachine.STATE_TITLE
+                        GameState.STATE_TITLE
                     )
 
     # ----------------------------------------
@@ -321,12 +327,12 @@ class Game:
 
         match self._state:
 
-            case StateMachine.STATE_TITLE:
+            case GameState.STATE_TITLE:
 
                 background.draw(self.screen,self.camera)
                 self.start_bttn.draw(self.screen)
 
-            case StateMachine.STATE_START_TEXT:
+            case GameState.STATE_START_TEXT:
 
                 background.draw(
                     self.screen,
@@ -338,7 +344,7 @@ class Game:
                     (self.width // 2, 30)
                 )
 
-            case StateMachine.STATE_GAME:
+            case GameState.STATE_GAME:
 
                 godzina_tekst = (f"Godzina: {self.current_night.godzina if self.current_night.godzina != 0 else 12} AM")
 
@@ -434,6 +440,20 @@ class Game:
           max_x = max(0, bg_rect.width - self.width)
           self.camera.rect.x = max(0, min(self.camera.rect.x, max_x))  
 
+class LoadingScreen:
+    __slots__ = ('game', 'progress', 'tasks')
+
+    def __init__(self, game):
+        self.game = game
+        self.progress = 0
+        self.tasks = []
+
+    def update(self, deltatime):
+        pass
+
+    def draw(self, screen):
+        pass
+
 class Night:
     """Zarządza logiką godzin i aktualizowaniem AI przeciwników."""
 
@@ -494,7 +514,7 @@ class Night:
                 self._boost_ai(AnimatronicID.FREDDY, 3)
 
             case 6:
-                self.game.change_state(StateMachine.STATE_NIGHT_END)
+                self.game.change_state(GameState.STATE_NIGHT_END)
 
     def night_2_event(self):
             match self.godzina:
@@ -514,7 +534,7 @@ class Night:
                     self._boost_ai(AnimatronicID.FREDDY, 3)
     
                 case 6:
-                    self.game.change_state(StateMachine.STATE_NIGHT_END)
+                    self.game.change_state(GameState.STATE_NIGHT_END)
 
     def night_3_event(self):
             match self.godzina:
@@ -534,7 +554,7 @@ class Night:
                     self._boost_ai(AnimatronicID.FREDDY, 3)
     
                 case 6:
-                    self.game.change_state(StateMachine.STATE_NIGHT_END)
+                    self.game.change_state(GameState.STATE_NIGHT_END)
     
     def hour_event(self):
         self.night_events[self.curr_night - 1]()

@@ -5,7 +5,7 @@ from assets import AssetManager
 from camera import Camera, CameraID
 from animatronics import Freddy
 from enum import Enum, auto
-from button import Button, CamButton
+from button import ImageButton, CamButton, TextButton
 from video import *
 from my_random import Random
 from audio import Audio
@@ -23,11 +23,9 @@ class GameState(Enum):
     STATE_GAME = auto()
     STATE_NIGHT_END = auto()
 
-
 class SubStateMachine(Enum):
     SUBSTATE_OFFICE = auto()
     SUBSTATE_CAM = auto()
-
 
 class AnimatronicID(Enum):
     FREDDY = auto()
@@ -141,21 +139,34 @@ class Game:
 
     def _init_ui(self):
 
-        self.start_bttn = Button(
+        self.new_game_bttn = TextButton(
+            x=self.width - 160,
+            y=160,
+            text="NEW GAME",
+            font=self.font,
+            id="start"
+        )
+                
+        self.start_bttn = ImageButton(
             assets=self.assets,
             x=self.width - 160,
             y=160,
-            idle="start_idle_PLACEHOLDER_.png",
-            hover="start_hover_PLACEHOLDER_.png",
-            pressed="start_pressed_PLACEHOLDER_.png"
+            images=[
+                "start_idle_PLACEHOLDER_.png",
+                "start_hover_PLACEHOLDER_.png",
+                "start_pressed_PLACEHOLDER_.png"
+            ]
         )
 
-        self.camera_onoff_bttn = Button(
+        self.camera_onoff_bttn = ImageButton(
             assets=self.assets,
             x=self.width // 2,
             y=self.height - 40,
-            idle="start_idle_PLACEHOLDER_.png",
-            pressed="start_pressed_PLACEHOLDER_.png"
+            images=[
+                "start_idle_PLACEHOLDER_.png",
+                None,
+                "start_pressed_PLACEHOLDER_.png"
+            ]
         )
 
         self.cam_bttn = [
@@ -163,8 +174,12 @@ class Game:
                 assets=self.assets,
                 x=self.width - 160,
                 y=160 + i * 40,
-                idle="start_idle_PLACEHOLDER_.png",
-                active="start_pressed_PLACEHOLDER_.png",
+                images=[
+                    "start_idle_PLACEHOLDER_.png",
+                    None,
+                    None,
+                    "start_pressed_PLACEHOLDER_.png"
+                ],
                 id=cam_id
             )
             for i, cam_id in enumerate(CameraID)
@@ -238,7 +253,7 @@ class Game:
                         if event.key == pygame.K_ESCAPE:
                             self.running = False
 
-                    if self.start_bttn.handler(event):
+                    if self.new_game_bttn.handler(event):
                         self.change_state(
                             GameState.STATE_GAME
                         )
@@ -293,7 +308,7 @@ class Game:
 
             case GameState.STATE_TITLE:
 
-                self.start_bttn.update()
+                self.new_game_bttn.update()
 
             case GameState.STATE_GAME:
 
@@ -330,7 +345,7 @@ class Game:
             case GameState.STATE_TITLE:
 
                 background.draw(self.screen,self.camera)
-                self.start_bttn.draw(self.screen)
+                self.new_game_bttn.draw(self.screen)
 
             case GameState.STATE_START_TEXT:
 

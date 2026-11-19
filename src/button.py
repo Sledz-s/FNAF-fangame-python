@@ -9,27 +9,17 @@ class ButtonState(Enum):
     IDLE = auto()
     HOVER = auto()
     PRESSED = auto()
+    ACTIVE = auto()
 
 # ----------------------------------------
 
 class Button:
-    __slots__ = ('id', 'image_idle', 'image_hover', 'image_pressed', 'image', 'rect', 'is_pressed')
-    def __init__(self, assets: AssetManager, x, y, idle, hover=None, pressed=None, id = None):
+    __slots__ = ('id', 'images', 'image', 'rect', 'is_pressed')
+
+    def __init__(self, x, y, images: list, id=None):
         self.id = id
-        self.image_idle = assets.load_image(idle)
-
-
-        self.image_hover = (
-            assets.load_image(hover)
-            if hover else self.image_idle
-        )
-
-        self.image_pressed = (
-            assets.load_image(pressed)
-            if pressed else self.image_hover
-        )
-
-        self.image = self.image_idle
+        self.images = images
+        self.image = images[0]
         self.rect = self.image.get_rect(topleft=(x, y))
         self.is_pressed = False
 
@@ -38,12 +28,12 @@ class Button:
         hovered = self.rect.collidepoint(mouse_pos)
 
         if hovered and self.is_pressed:
-            self.image = self.image_pressed
+            self.image = self.images[2]
         elif hovered:
-            self.image = self.image_hover
+            self.image = self.images[1]
         else:
-            self.image = self.image_idle
-
+            self.image = self.images[0]
+    
     def draw(self, screen):
         screen.blit(self.image, self.rect)
 
@@ -52,28 +42,82 @@ class Button:
             if self.rect.collidepoint(event.pos):
                 self.is_pressed = True
 
-        if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+        elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
             if self.is_pressed and self.rect.collidepoint(event.pos):
                 self.is_pressed = False
                 return True
+
             self.is_pressed = False
         return False
 
-class CamButton(Button):
-    __slots__ = ('image_active', 'is_active')
-    def __init__(self, assets, x, y, idle, active, id=None):
-        super().__init__(assets, x, y, idle, id=id)
+class ImageButton(Button):
+    def __init__(self, assets: AssetManager, x, y, images, id=None):
+        idle_image = assets.load_image(images[0])
 
-        self.image_active = assets.load_image(active)
+        hover_image = (
+            assets.load_image(images[1])
+            if images[1] else idle_image
+        )
+
+        pressed_image = (
+            assets.load_image(images[2])
+            if images[2] else hover_image
+        )
+
+        loaded_images = (
+            idle_image,
+            hover_image,
+            pressed_image
+        )
+
+        super().__init__(x, y, loaded_images, id)
+    
+class TextButton(Button):
+    def __init__(self, x, y, text, font, id=None):
+
+        images = (
+            font.render(text, True, (255, 255, 255)),
+            font.render(text, True, (255, 255, 0)),
+            font.render(text, True, (255, 0, 0))
+        )
+
+        super().__init__(x, y, images, id)
+
+class CamButton(Button):
+    __slots__ = ('is_active',)
+
+    def __init__(self, assets: AssetManager, x, y, images, id=None):
+        idle_image = assets.load_image(images[0])
+
+        hover_image = (
+            assets.load_image(images[1])
+            if images[1] else idle_image
+        )
+
+        pressed_image = (
+            assets.load_image(images[2])
+            if images[2] else hover_image
+        )
+
+        active_image = (
+            assets.load_image(images[3])
+            if images[3] else pressed_image
+        )
+
+        loaded_images = (
+            idle_image,
+            hover_image,
+            pressed_image,
+            active_image
+        )
+
+        super().__init__(x, y, loaded_images, id)
+
         self.is_active = False
 
     def update(self):
-        mouse_pos = pygame.mouse.get_pos()
-        hovered = self.rect.collidepoint(mouse_pos)
-
         if self.is_active:
-            self.image = self.image_active
-        elif hovered:
-            self.image = self.image_hover
-        else:
-            self.image = self.image_idle
+            self.image = self.images[3]
+            return
+
+        super().update()

@@ -9,3 +9,6 @@ class Random:
 
     def randint(self, a: int, b: int) -> int:
         return random_native.randint(a, b)
+
+    def choice(self, array: list):
+        return random_native.choice(array)

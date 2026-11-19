@@ -60,6 +60,29 @@ static PyObject *rng_randint(PyObject *self, PyObject *args) {
     return PyLong_FromLong((long)((int64_t)a + value));
 }
 
+static PyObject *rng_choice(PyObject *self, PyObject *args) {
+    PyObject *seq = NULL;
+
+    if(!PyArg_ParseTuple(args, "O", &seq)){
+        return NULL;
+    }
+
+    Py_ssize_t len = PySequence_Size(seq);
+    if (len < 0) {
+        return NULL;
+    }
+
+    if (len == 0) {
+        PyErr_SetString(PyExc_IndexError, "Cannot choose from an empty sequence");
+        return NULL;
+    }
+
+    uint32_t choosed_index = xorshift32() % (uint32_t)len;
+    PyObject *choosed_item = PySequence_GetItem(seq, (Py_ssize_t)choosed_index);
+
+    return choosed_item;
+}
+
 // ----------------------------------------
 // Module methods
 // ----------------------------------------
@@ -67,6 +90,7 @@ static PyObject *rng_randint(PyObject *self, PyObject *args) {
 static PyMethodDef RandomMethods[] = {
     {"seed", rng_seed, METH_VARARGS, "Set RNG seed."},
     {"randint", rng_randint, METH_VARARGS, "Generate random integer."},
+    {"choice", rng_choice, METH_VARARGS, "Choose item from list"},
     {NULL, NULL, 0, NULL}
 };
 

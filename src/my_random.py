@@ -1,9 +1,10 @@
 import time
 import random_native
+import os
 
 class Random:
     def __init__(self):
-        seed = int(time.time()) & 0xFFFFFFFF
+        seed = int.from_bytes(os.urandom(4), byteorder="little", signed=False)
         random_native.seed(seed)
 
     def randint(self, a: int, b: int) -> int:

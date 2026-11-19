@@ -146,17 +146,6 @@ class Game:
             font=self.font,
             id="start"
         )
-                
-        self.start_bttn = ImageButton(
-            assets=self.assets,
-            x=self.width - 160,
-            y=160,
-            images=[
-                "start_idle_PLACEHOLDER_.png",
-                "start_hover_PLACEHOLDER_.png",
-                "start_pressed_PLACEHOLDER_.png"
-            ]
-        )
 
         self.camera_onoff_bttn = ImageButton(
             assets=self.assets,

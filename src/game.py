@@ -84,6 +84,7 @@ class Game:
         # TEST
         
         self.audio.music.play(0)
+        self.audio.music.set_volume(0.25)
 
     # ----------------------------------------
     # --- ASSETS ---
@@ -134,6 +135,11 @@ class Game:
             )
         }
 
+        self.sfx_camera_static = ScreenEffects()
+        self.sfx_camera_static.add_effect(
+            ImageEffect(self.assets, image="bg/sfx/static/cam_static_1.png", alpha=100)
+        )
+
     # ----------------------------------------
     # --- UI ---
 
@@ -173,6 +179,24 @@ class Game:
             )
             for i, cam_id in enumerate(CameraID)
         ]
+
+        self.sfx_camera_static = ScreenEffects()
+        self.sfx_camera_static.add_effect(
+            AnimatedImageEffect(
+            self.assets,
+            images=[
+               "bg/sfx/static/cam_static_1.png",
+                "bg/sfx/static/cam_static_2.png",
+                "bg/sfx/static/cam_static_3.png",
+                "bg/sfx/static/cam_static_4.png",
+                "bg/sfx/static/cam_static_5.png",
+                "bg/sfx/static/cam_static_6.png",
+                "bg/sfx/static/cam_static_7.png",
+                "bg/sfx/static/cam_static_8.png"
+                ],
+            frame_time=0.05, alpha=70
+            )
+        )
 
     # ----------------------------------------
     # --- ENTITIES ---
@@ -310,6 +334,8 @@ class Game:
 
                 elif self._substate == SubStateMachine.SUBSTATE_CAM:
 
+                    self.sfx_camera_static.update(deltatime)
+                    
                     for bttn in self.cam_bttn:
                         bttn.update()
 
@@ -363,6 +389,8 @@ class Game:
                         self.camera
                     )
 
+                    self.sfx_camera_static.draw(self.screen) # <----- here is static overlay
+
                     self.print_on_screen(
                         f"KAMERA: {self.current_cam_id.name}",
                         (self.width // 2, 30)
@@ -372,6 +400,8 @@ class Game:
 
                     for bttn in self.cam_bttn:
                         bttn.draw(self.screen)
+
+                    
 
                 self.camera_onoff_bttn.draw(self.screen)
 

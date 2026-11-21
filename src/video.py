@@ -120,30 +120,6 @@ class ScreenEffect:
     def draw(self, screen: pygame.Surface):
         pass
 
-class FlashEffect(ScreenEffect):
-    def __init__(self, color=(255, 255, 255), duration=0.2):
-        super().__init__()
-
-        self.color = color
-        self.duration = duration
-        self.timer = 0.0
-
-    def update(self, deltatime):
-        self.timer += deltatime
-
-        if self.timer >= self.duration:
-            self.active = False
-
-    def draw(self, screen):
-        if self.active:
-            overlay = pygame.Surface(screen.get_size())
-            overlay.fill(self.color)
-
-            alpha = 255 * (1.0 - self.timer / self.duration)
-            overlay.set_alpha(int(alpha))
-
-            screen.blit(overlay, (0, 0))
-
 class ScreenEffects:
     def __init__(self):
         self.effects = []
@@ -155,8 +131,85 @@ class ScreenEffects:
         for effect in self.effects:
             effect.update(deltatime)
 
-        self.effects = [effect for effect in self.effects if effect.active]
+        self.effects = [
+            effect for effect in self.effects
+            if effect.active
+        ]
 
     def draw(self, screen):
         for effect in self.effects:
             effect.draw(screen)
+
+
+class FlashEffect(ScreenEffect):
+    def __init__(self, color=(255, 255, 255), duration=0.2):
+        super().__init__()
+
+        self.color = color
+        self.duration = duration
+        self.timer = 0.0
+        self.overlay = None
+
+    def update(self, deltatime):
+        self.timer += deltatime
+
+        if self.timer >= self.duration:
+            self.active = False
+
+    def draw(self, screen):
+        if self.active:
+            if self.overlay is None:
+                self.overlay = pygame.Surface(screen.get_size())
+
+            self.overlay.fill(self.color)
+
+            alpha = 255 * (1.0 - self.timer / self.duration)
+            self.overlay.set_alpha(int(alpha))
+
+            screen.blit(self.overlay, (0, 0))
+
+class ImageEffect(ScreenEffect):
+    def __init__(self, assets: AssetManager, image, alpha=255):
+        super().__init__()
+
+        self.image = assets.load_image(image)
+        self.alpha = alpha
+
+    def draw(self, screen):
+        if self.active:
+            self.image.set_alpha(self.alpha)
+            screen.blit(self.image, (0, 0))
+
+class AnimatedImageEffect(ScreenEffect):
+    def __init__(self, assets: AssetManager, images, frame_time=0.05, alpha=(255 // 2)):
+        super().__init__()
+
+        self.images = [
+            assets.load_image(image)
+            for image in images
+        ]
+
+        self.frame = 0
+        self.frame_time = frame_time
+        self.timer = 0.0
+        self.alpha = alpha
+
+    def update(self, deltatime):
+        if not self.active:
+            return
+
+        self.timer += deltatime
+
+        if self.timer >= self.frame_time:
+            self.timer -= self.frame_time
+
+            self.frame += 1
+
+            if self.frame >= len(self.images):
+                self.frame = 0
+
+    def draw(self, screen):
+        if self.active:
+            image = self.images[self.frame]
+            image.set_alpha(self.alpha)
+            screen.blit(image, (0, 0))

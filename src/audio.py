@@ -9,9 +9,11 @@ class Audio:
         self.music: Music = Music(self.assets)
         self.sfx: SoundEffect = SoundEffect(self.assets)
 
-    def set_master_volume(self, volume) -> None:
+    def set_master_volume(self, volume: float) -> None:
         for sound in self.assets.sounds.values():
             sound.set_volume(volume)
+
+        self.music.set_volume(volume)
 
     def fadeout(self, time_ms: int) -> None:
          pygame.mixer.fadeout(time_ms)

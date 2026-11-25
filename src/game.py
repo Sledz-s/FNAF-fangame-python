@@ -74,9 +74,9 @@ class Game:
         # ----------------------------------------
         # Inicjalizacja
 
-        self._init_assets()
-        self._init_ui()
-        self._init_entities()
+        self.__init_assets()
+        self.__init_ui()
+        self.__init_entities()
 
         self.wait_time = 0.0
 
@@ -89,7 +89,7 @@ class Game:
     # ----------------------------------------
     # --- ASSETS ---
 
-    def _init_assets(self):
+    def __init_assets(self):
 
         self.font = pygame.font.Font(None, 36)
 
@@ -113,33 +113,11 @@ class Game:
             )
         }
 
-        self.cam_bg = {
-            CameraID.CAM_1A: Background(
-                self.assets, "cam/cam01a_PLACEHOLDER.png"
-            ),
-
-            CameraID.CAM_1B: Background(
-                self.assets, "cam/cam01b_PLACEHOLDER.png"
-            ),
-
-            CameraID.CAM_1C: Background(
-                self.assets, "cam/cam01c_PLACEHOLDER.png"
-            ),
-
-            CameraID.CAM_2A: Background(
-                self.assets, "cam/cam02a_PLACEHOLDER.png"
-            ),
-
-            CameraID.CAM_2B: Background(
-                self.assets, "cam/cam02b_PLACEHOLDER.png"
-            )
-        }
-
 
     # ----------------------------------------
     # --- UI ---
 
-    def _init_ui(self):
+    def __init_ui(self):
 
         self.new_game_bttn = TextButton(
             x=self.width - 160,
@@ -148,6 +126,8 @@ class Game:
             font=self.font,
             id="start"
         )
+
+    def __load_night_assets(self):
 
         self.camera_onoff_bttn = ImageButton(
             assets=self.assets,
@@ -176,6 +156,28 @@ class Game:
             for i, cam_id in enumerate(CameraID)
         ]
 
+        self.cam_bg = {
+            CameraID.CAM_1A: Background(
+                self.assets, "cam/cam01a_PLACEHOLDER.png"
+            ),
+
+            CameraID.CAM_1B: Background(
+                self.assets, "cam/cam01b_PLACEHOLDER.png"
+            ),
+
+            CameraID.CAM_1C: Background(
+                self.assets, "cam/cam01c_PLACEHOLDER.png"
+            ),
+
+            CameraID.CAM_2A: Background(
+                self.assets, "cam/cam02a_PLACEHOLDER.png"
+            ),
+
+            CameraID.CAM_2B: Background(
+                self.assets, "cam/cam02b_PLACEHOLDER.png"
+            )
+        }
+
         self.sfx_camera_static = ScreenEffects()
         self.sfx_camera_static.add_effect(
             AnimatedImageEffect(
@@ -193,19 +195,19 @@ class Game:
             frame_time=0.05, alpha=70, random_flag=True
             )
         )
-        self.sfx_camera_static.add_effect(
-            ImageEffect(
-                self.assets, "bg/sfx/camera_border.png", alpha=255/2)
-        )
-        self.sfx_camera_border = ScreenEffect()
+
+    def __unload_night_assets(self):
+        self.camera_onoff_bttn = None
+        self.cam_bttn = None
+        self.cam_bg = None
+        self.sfx_camera_static = None
 
     # ----------------------------------------
     # --- ENTITIES ---
 
-    def _init_entities(self):
+    def __init_entities(self):
 
         self.camera = Camera(self.width, self.height)
-
         self.fade = FadeTransition(self.width,self.height,speed=400)
 
         self.current_night = None
@@ -214,13 +216,11 @@ class Game:
     # --- STATE MACHINE ---
 
     def change_state(self, new_state):
-
         if not self.fade.active:
             self._target_state = new_state
             self.fade.start("OUT")
 
     def init_state_change(self):
-
         self._state = self._target_state
 
         match self._state:
@@ -229,10 +229,12 @@ class Game:
                 self._substate = None
 
             case GameState.STATE_TITLE:
+                self.__unload_night_assets()
                 self._substate = None
 
             case GameState.STATE_GAME:
 
+                self.__load_night_assets()
                 self.current_night = Night(curr_night=1, game=self)
 
                 self._substate = SubStateMachine.SUBSTATE_OFFICE
@@ -247,7 +249,6 @@ class Game:
     # --- EVENTS ---
 
     def handle_events(self):
-
         for event in pygame.event.get():
 
             if event.type == pygame.QUIT:
@@ -276,9 +277,7 @@ class Game:
 
                     if event.type == pygame.KEYDOWN:
                         if event.key == pygame.K_ESCAPE:
-                            self.change_state(
-                                GameState.STATE_TITLE
-                            )
+                            self.change_state(GameState.STATE_TITLE)
 
                     match self._substate:
 
@@ -308,6 +307,7 @@ class Game:
         if self.fade.update(deltatime):
             self.init_state_change()
 
+
         match self._state:
 
             case GameState.STATE_START_TEXT:
@@ -331,7 +331,7 @@ class Game:
                 self.camera_onoff_bttn.update()
 
                 if self._substate == SubStateMachine.SUBSTATE_OFFICE:
-                    self._update_camera_view(deltatime)
+                    self.__update_camera_view(deltatime)
 
                 elif self._substate == SubStateMachine.SUBSTATE_CAM:
 
@@ -457,7 +457,7 @@ class Game:
     # ----------------------------------------
     # --- CAMERA VIEW ---
 
-    def _update_camera_view(self, deltatime: float):
+    def __update_camera_view(self, deltatime: float):
           mouse_x, _ = pygame.mouse.get_pos()
   
           border = 150
@@ -507,9 +507,9 @@ class Night:
             self.night_3_event,
         ]
 
-        self._create_animatronics()
+        self.__create_animatronics()
         
-    def _create_animatronics(self):
+    def __create_animatronics(self):
 
         self.freddy: Freddy = Freddy(tick_interval=1.0,ai=1,rng=self.game.rng)
                 
@@ -528,7 +528,7 @@ class Night:
         for animatronic in self.animatronics:
             animatronic.update(deltatime)
 
-    def _boost_ai(self, animatronic_id: AnimatronicID, amount: int):
+    def __boost_ai(self, animatronic_id: AnimatronicID, amount: int):
         self.animatronics[animatronic_id.value].increase_ai(amount)
 
     def night_1_event(self):
@@ -540,13 +540,13 @@ class Night:
                 pass
 
             case 3:
-                self._boost_ai(AnimatronicID.FREDDY, 1)
+                self.__boost_ai(AnimatronicID.FREDDY, 1)
 
             case 4:
-                self._boost_ai(AnimatronicID.FREDDY, 2)
+                self.__boost_ai(AnimatronicID.FREDDY, 2)
 
             case 5:
-                self._boost_ai(AnimatronicID.FREDDY, 3)
+                self.__boost_ai(AnimatronicID.FREDDY, 3)
 
             case 6:
                 self.game.change_state(GameState.STATE_NIGHT_END)
@@ -560,13 +560,13 @@ class Night:
                     pass
     
                 case 3:
-                    self._boost_ai(AnimatronicID.FREDDY, 1)
+                    self.__boost_ai(AnimatronicID.FREDDY, 1)
     
                 case 4:
-                    self._boost_ai(AnimatronicID.FREDDY, 2)
+                    self.__boost_ai(AnimatronicID.FREDDY, 2)
     
                 case 5:
-                    self._boost_ai(AnimatronicID.FREDDY, 3)
+                    self.__boost_ai(AnimatronicID.FREDDY, 3)
     
                 case 6:
                     self.game.change_state(GameState.STATE_NIGHT_END)
@@ -580,13 +580,13 @@ class Night:
                     pass
     
                 case 3:
-                    self._boost_ai(AnimatronicID.FREDDY, 1)
+                    self.__boost_ai(AnimatronicID.FREDDY, 1)
     
                 case 4:
-                    self._boost_ai(AnimatronicID.FREDDY, 2)
+                    self.__boost_ai(AnimatronicID.FREDDY, 2)
     
                 case 5:
-                    self._boost_ai(AnimatronicID.FREDDY, 3)
+                    self.__boost_ai(AnimatronicID.FREDDY, 3)
     
                 case 6:
                     self.game.change_state(GameState.STATE_NIGHT_END)

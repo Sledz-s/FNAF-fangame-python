@@ -15,6 +15,9 @@ class AssetManager:
 
         return self.images[path]
 
+    def unload_imge(self, filename):
+        pass
+
     def load_sound(self, filename):
         path = os.path.join(RSC_DIR, filename)
 

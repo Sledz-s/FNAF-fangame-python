@@ -135,10 +135,6 @@ class Game:
             )
         }
 
-        self.sfx_camera_static = ScreenEffects()
-        self.sfx_camera_static.add_effect(
-            ImageEffect(self.assets, image="bg/sfx/static/cam_static_1.png", alpha=100)
-        )
 
     # ----------------------------------------
     # --- UI ---
@@ -185,7 +181,7 @@ class Game:
             AnimatedImageEffect(
             self.assets,
             images=[
-               "bg/sfx/static/cam_static_1.png",
+                "bg/sfx/static/cam_static_1.png",
                 "bg/sfx/static/cam_static_2.png",
                 "bg/sfx/static/cam_static_3.png",
                 "bg/sfx/static/cam_static_4.png",
@@ -194,9 +190,14 @@ class Game:
                 "bg/sfx/static/cam_static_7.png",
                 "bg/sfx/static/cam_static_8.png"
                 ],
-            frame_time=0.05, alpha=70
+            frame_time=0.05, alpha=70, random_flag=True
             )
         )
+        self.sfx_camera_static.add_effect(
+            ImageEffect(
+                self.assets, "bg/sfx/camera_border.png", alpha=255/2)
+        )
+        self.sfx_camera_border = ScreenEffect()
 
     # ----------------------------------------
     # --- ENTITIES ---

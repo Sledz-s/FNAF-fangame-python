@@ -1,6 +1,7 @@
 import pygame
 from dir import SCREENS_DIR
 from assets import AssetManager
+from my_random import Random
 
 # ----------------------------------------
 
@@ -181,7 +182,7 @@ class ImageEffect(ScreenEffect):
             screen.blit(self.image, (0, 0))
 
 class AnimatedImageEffect(ScreenEffect):
-    def __init__(self, assets: AssetManager, images, frame_time=0.05, alpha=(255 // 2)):
+    def __init__(self, assets: AssetManager, images, frame_time=0.05, alpha=(255 // 2), random_flag: bool = False):
         super().__init__()
 
         self.images = [
@@ -193,6 +194,10 @@ class AnimatedImageEffect(ScreenEffect):
         self.frame_time = frame_time
         self.timer = 0.0
         self.alpha = alpha
+
+        self.random_flag = random_flag
+        if self.random_flag:
+            self.random = Random()
 
     def update(self, deltatime):
         if not self.active:
@@ -211,5 +216,15 @@ class AnimatedImageEffect(ScreenEffect):
     def draw(self, screen):
         if self.active:
             image = self.images[self.frame]
-            image.set_alpha(self.alpha)
+            if not self.random_flag:
+                image.set_alpha(self.alpha)
+
+            else:
+                val = self.random.randint(0,10)
+                if self.random.randint(0, 1):
+                    image.set_alpha(self.alpha - val)
+                else:
+                    image.set_alpha(self.alpha + val)
+
+            
             screen.blit(image, (0, 0))
